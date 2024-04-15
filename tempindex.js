@@ -1,69 +1,13 @@
 //params
-// var vheight = window.innerHeight;
-// var vwidth = window.innerWidth;
 var vheight = 500;
 var vwidth = 800;
-var step = 1;
-const checksContainer = document.getElementById("checks");
-const fpsContainer = document.getElementById("fps");
-const bodiesContainer = document.getElementById("bodies");
+var step = 2;
 
 var yCount = vheight / step - 1;
 var xCount = vwidth / step - 1;
 
 var canvas = createCanvas(vwidth, vheight);
-var ctx = canvas.getContext("webgl");
-let pixels = new Uint8ClampedArray(canvas.width * canvas.height * 4);
-
-let vertexShaderCode = `
-    attribute vec2 position;
-    vec2 world = vec2(${vwidth}, ${vheight});
-    void main() {
-        vec2 tempPos = (position)/world * 2.0 - 1.0;
-        gl_Position = vec4(vec2(1.0, -1.0)*tempPos, 0.0, 1.0);
-        gl_PointSize = 1.0; // Set point size to 1 pixel
-    }
-`;
-
-let fragmentShaderCode = `
-    void main() {
-        gl_FragColor = vec4(vec3(154, 205, 50)/255.0, 1.0); // Set pixel color to white
-    }
-`;
-
-let vertexShader = ctx.createShader(ctx.VERTEX_SHADER);
-ctx.shaderSource(vertexShader, vertexShaderCode);
-ctx.compileShader(vertexShader);
-
-if (!ctx.getShaderParameter(vertexShader, ctx.COMPILE_STATUS)) {
-  console.warn(
-    `An error occurred compiling the shaders: ${ctx.getShaderInfoLog(
-      vertexShader
-    )}`
-  );
-}
-
-let fragmentShader = ctx.createShader(ctx.FRAGMENT_SHADER);
-ctx.shaderSource(fragmentShader, fragmentShaderCode);
-ctx.compileShader(fragmentShader);
-
-if (!ctx.getShaderParameter(fragmentShader, ctx.COMPILE_STATUS)) {
-  console.warn(
-    `An error occurred compiling the shaders: ${ctx.getShaderInfoLog(
-      fragmentShader
-    )}`
-  );
-}
-
-let shaderProgram = ctx.createProgram();
-ctx.attachShader(shaderProgram, vertexShader);
-ctx.attachShader(shaderProgram, fragmentShader);
-ctx.linkProgram(shaderProgram);
-ctx.useProgram(shaderProgram);
-
-let pos = [];
-
-ctx.viewport(0, 0, canvas.width, canvas.height);
+var ctx = canvas.getContext("2d");
 
 var grid = []; //stores presence of particle
 var particles = []; //stores actual particles
@@ -77,9 +21,7 @@ var fps = 0;
 var currentFps = 0;
 
 class Particle {
-  static count = 0;
   constructor(x, y, type) {
-    Particle.count++;
     this.x = x;
     this.y = y;
     this.id = ++id;
@@ -105,6 +47,9 @@ animate();
 checkTime();
 
 async function animate() {
+  ctx.fillStyle = "lightblue";
+  ctx.fillRect(0, 0, vwidth, vheight);
+
   if (added) {
     particles.push(...newParticles);
     newParticles = [];
@@ -112,41 +57,13 @@ async function animate() {
   }
 
   resetGrid();
-
+  ctx.strokeText("FPS: " + currentFps, 20, 100);
+  ctx.strokeText("TOTAL PARTICLES: " + particles.length, 20, 150);
   updatePos();
 
-  let positions = new Float32Array(pos);
-  let positionBuffer = ctx.createBuffer();
-  ctx.bindBuffer(ctx.ARRAY_BUFFER, positionBuffer);
-  ctx.bufferData(ctx.ARRAY_BUFFER, positions, ctx.STATIC_DRAW);
-  // Get the position attribute location
-  let positionAttributeLocation = ctx.getAttribLocation(
-    shaderProgram,
-    "position"
-  );
-  ctx.enableVertexAttribArray(positionAttributeLocation);
-
-  // Specify how to pull the data out of the position buffer
-  let size = 2; // 2 components per iteration
-  let type = ctx.FLOAT; // the data is 32bit floats
-  let normalize = false; // don't normalize the data
-  let stride = 0; // 0 = move forward size * sizeof(type) each iteration to get the next position
-  let offset = 0; // start at the beginning of the buffer
-  ctx.vertexAttribPointer(
-    positionAttributeLocation,
-    size,
-    type,
-    normalize,
-    stride,
-    offset
-  );
-  ctx.clearColor(173 / 255, 216 / 255, 230 / 255, 1.0); // black background
-  ctx.clear(ctx.COLOR_BUFFER_BIT);
-  // Draw the points
-  ctx.drawArrays(ctx.POINTS, 0, positions.length / size);
+  drawGrid();
   // await Sleep(100);
   fps += 1;
-  bodiesContainer.innerHTML = "Bodies: " + Particle.count;
   requestAnimationFrame(animate);
 }
 
@@ -154,7 +71,6 @@ async function checkTime() {
   while (true) {
     await Sleep(1000);
     currentFps = fps;
-    fpsContainer.innerHTML = "FPS: " + fps;
     fps = 0;
   }
 }
@@ -193,12 +109,9 @@ async function updatePos() {
       }
     }
   }
-  // ctx.strokeText("CHECK: " + checks, 20, 50);
-  checksContainer.innerHTML = "CHECK: " + checks;
+  ctx.strokeText("CHECK: " + checks, 20, 50);
 }
 
-//for water type
-//currently experimental
 function moveElement1(i, j, element) {
   var movementX = false;
   for (let m = 0; m < element.vx; m++) {
@@ -266,7 +179,6 @@ function moveElement1(i, j, element) {
   }
 }
 
-//for sand type
 function moveElement(i, j, element) {
   var movementX = false;
   for (let m = 0; m < element.vx; m++) {
@@ -335,11 +247,9 @@ function resetGrid() {
       grid[i][j] = -1;
     }
   }
-  pos = [];
   //filling up the grid
   particles.forEach((element) => {
     grid[element.x][element.y] = element.id;
-    pos.push(element.x, element.y);
   });
 }
 
@@ -349,7 +259,7 @@ function Sleep(ms) {
 
 canvas.onmousemove = function (event) {
   var mx = event.offsetX;
-  var size = 20;
+  var size = 10;
   var my = event.offsetY;
   if (event.offsetX + size * step * 2 > canvas.width) {
     return;
@@ -375,28 +285,6 @@ canvas.onmousedown = function (event) {
   added = true;
   L(Math.round(mx / step), Math.round(my / step));
 };
-
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-  var mx = e.touches[0].clientX;
-  var size = 20;
-  var my = e.touches[0].clientY;
-  if (e.touches[0].clientX + size * step * 2 > canvas.width) {
-    return;
-  }
-  for (let i = 0; i < size; i++) {
-    for (let j = 0; j < size; j++) {
-      newParticles.push(
-        new Particle(
-          Math.round(mx / step) + i * step,
-          Math.round(my / step) + j * step,
-          1
-        )
-      );
-    }
-  }
-  added = true;
-});
 
 //tetris L Shape
 function L(x, y) {

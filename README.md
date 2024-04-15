@@ -1,5 +1,10 @@
 # Sand Simulator
 
-A basic sand simulator capable of simulating 20k sand particles at 60fps and 50k at 30fps on intel i5 10th gen processor
-
+A Sand Simulator.
 ![alt text](image.png)
+
+## Features:
+
+- Can Handle Any amount particles using sleep collision (dont check collision for particles that have not moved for some amount of ticks)
+- Renders 100,000 particles at 60fps using WebGL.
+- Cellular automata for movement and collision detection.

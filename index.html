@@ -5,8 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
 </head>
+<style>
+    #root{
+        position: fixed;
+        z-index: 5;
+    }
+    body{
+        margin: 0;
+    }
+    canvas{
+        position: fixed;
+        margin: 0;
+    }
+</style>
 <body>
-    
+    <div id="root">
+        <div id="checks"></div>
+        <div id="bodies"></div>
+        <div id="fps"></div>
+    </div>
 </body>
 <script src="./canvas.js"></script>
 <script src="./index.js"></script>
