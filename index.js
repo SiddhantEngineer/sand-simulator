@@ -27,7 +27,7 @@ let vertexShaderCode = `
 
 let fragmentShaderCode = `
     void main() {
-        gl_FragColor = vec4(vec3(154, 205, 50)/255.0, 1.0); // Set pixel color to white
+        gl_FragColor = vec4(vec3(255, 255, 150)/255.0, 1.0); // Set pixel color to white
     }
 `;
 
